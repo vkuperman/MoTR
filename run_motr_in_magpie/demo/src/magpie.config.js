@@ -5,5 +5,6 @@ export default {
   completionUrl: 'https://app.prolific.co/submissions/complete?cc=C1I4D2OB',
   contactEmail: 'cui.ding@uzh.ch',
   mode: 'debug',
-  language: 'en'
+  language: 'en',
+  resultsUploadUrl: 'https://mo-tr-click.vercel.app/api/upload-results'
 };
