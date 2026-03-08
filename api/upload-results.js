@@ -4,7 +4,7 @@
  *
  * Optional env:
  * - GITHUB_TOKEN + GITHUB_REPO: push zip to GitHub Results/
- * - RESEND_API_KEY + EMAIL_TO: email zip to EMAIL_TO (e.g. mac.readlab@gmail.com)
+ * - RESEND_API_KEY + EMAIL_TO: email zip to EMAIL_TO (Resend free tier: only to account owner until domain verified)
  * At least one of (GitHub) or (Resend + EMAIL_TO) must be set.
  */
 
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
   const githubToken = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPO || 'vkuperman/MoTR_Click';
   const resendKey = process.env.RESEND_API_KEY;
-  const emailTo = process.env.EMAIL_TO || 'mac.readlab@gmail.com';
+  const emailTo = process.env.EMAIL_TO || 'vkuperman@yahoo.com';
 
   const useGitHub = !!githubToken;
   const useEmail = !!(resendKey && emailTo);
