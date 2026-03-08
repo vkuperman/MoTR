@@ -187,9 +187,12 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ participantId: participantId || 'unknown', zipBase64 })
             });
-            if (!res.ok) throw new Error(res.statusText);
-          } catch (_) {
-            // Upload failed
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(`${res.status} ${errText}`);
+            }
+          } catch (e) {
+            console.error('Results upload failed:', e.message || e);
           }
         }
       }
