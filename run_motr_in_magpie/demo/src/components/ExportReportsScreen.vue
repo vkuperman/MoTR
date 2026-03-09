@@ -1,14 +1,31 @@
 <template>
-  <Screen title="Saving reports">
+  <Screen title="Thank you">
     <Slide>
-      <p>Saving fixation and interest area reports…</p>
-      <Wait :time="0" @done="exportAndNext" />
+      <p>
+        Thank you for participating! To get credit for this study, please type in your SONA ID here.
+        You can find it on the Linguistics SONA under <strong>My Profile &gt; Identity Code</strong>.
+      </p>
+      <div style="margin-top: 1em;">
+        <label>
+          SONA ID:
+          <input
+            type="text"
+            v-model="sonaId"
+            style="margin-left: 0.5em; padding: 0.2em 0.4em; min-width: 12em;"
+          />
+        </label>
+      </div>
+      <div style="margin-top: 1.5em;">
+        <button :disabled="!sonaId" @click="submitSonaAndNext">
+          Submit
+        </button>
+      </div>
     </Slide>
   </Screen>
 </template>
 
 <script>
-import { Screen, Slide, Wait } from 'magpie-base';
+import { Screen, Slide } from 'magpie-base';
 import stringify from 'csv-stringify/lib/sync';
 import JSZip from 'jszip';
 import magpieConfig from '../magpie.config.js';
@@ -207,7 +224,12 @@ function blobToBase64(blob) {
 
 export default {
   name: 'ExportReportsScreen',
-  components: { Screen, Slide, Wait },
+  components: { Screen, Slide },
+  data() {
+    return {
+      sonaId: ''
+    };
+  },
   methods: {
     async exportAndNext() {
       const allRows = this.$magpie.getAllData();
@@ -239,6 +261,12 @@ export default {
       }
 
       this.$magpie.nextSlide();
+    },
+    async submitSonaAndNext() {
+      if (this.sonaId) {
+        this.$magpie.addExpData({ SonaId: this.sonaId });
+      }
+      await this.exportAndNext();
     }
   }
 };
