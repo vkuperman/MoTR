@@ -20,6 +20,8 @@ function isFixationRow(row) {
 function buildFixationReport(allRows) {
   const fixationRows = allRows.filter(isFixationRow);
   if (fixationRows.length === 0) return '';
+  // Ensure fixations are ordered in time (scanpath order), not by word.
+  fixationRows.sort((a, b) => (a.responseTime || 0) - (b.responseTime || 0));
   return stringify(fixationRows, {
     columns: Object.keys(fixationRows[0]),
     header: true
@@ -32,8 +34,7 @@ function buildInterestAreaReport(allRows) {
 
   const byItem = {};
   for (const row of fixationRows) {
-    const id = row.ItemId;
-    if (id == null || id === '') continue;
+    const id = row.ItemId != null && row.ItemId !== '' ? row.ItemId : 'NO_ITEM';
     if (!byItem[id]) byItem[id] = [];
     byItem[id].push(row);
   }
@@ -64,6 +65,7 @@ function buildInterestAreaReport(allRows) {
       let totalDurationMs = '';
       let nextClickRegression = '';
       let xDistanceFromPreviousClick = '';
+      let xDistanceFromPreviousClickChars = '';
       let firstClickXFromWordLeftChars = '';
       let firstClickXFromWordCenterChars = '';
       let firstClickXFromLineStartPx = '';
@@ -104,6 +106,9 @@ function buildInterestAreaReport(allRows) {
         const prevClick = prevClicks.length ? prevClicks[prevClicks.length - 1] : null;
         if (prevClick != null && prevClick.mousePositionX != null) {
           xDistanceFromPreviousClick = (firstClick.mousePositionX - prevClick.mousePositionX).toFixed(2);
+          if (charWidth && charWidth > 0) {
+            xDistanceFromPreviousClickChars = (Number(xDistanceFromPreviousClick) / charWidth).toFixed(4);
+          }
         }
 
         const nextClicks = rows.filter(r => (r.responseTime || 0) > (lastClick.responseTime || 0) && r.Index != null && Number(r.Index) !== wordIndex);
@@ -131,7 +136,8 @@ function buildInterestAreaReport(allRows) {
         first_click_duration_ms: firstClickDurationMs,
         total_duration_ms: totalDurationMs,
         next_click_regression: nextClickRegression,
-        x_distance_from_previous_click: xDistanceFromPreviousClick,
+        x_distance_from_previous_click_px: xDistanceFromPreviousClick,
+        x_distance_from_previous_click_chars: xDistanceFromPreviousClickChars,
         first_click_x_from_word_left_chars: firstClickXFromWordLeftChars,
         first_click_x_from_word_center_chars: firstClickXFromWordCenterChars,
         first_click_x_from_line_start_px: firstClickXFromLineStartPx,
