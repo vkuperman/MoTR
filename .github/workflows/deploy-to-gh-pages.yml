@@ -14,17 +14,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install and Build
+      - name: Install and Build Provo
         run: |
-          cd run_motr_in_magpie/demo
+          cd run_motr_in_magpie/provo
           npm install
           npm run build
 
       - name: Add .nojekyll for GitHub Pages
-        run: touch run_motr_in_magpie/demo/dist/.nojekyll
+        run: touch run_motr_in_magpie/provo/dist/.nojekyll
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy Provo to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: run_motr_in_magpie/demo/dist
+          publish_dir: run_motr_in_magpie/provo/dist
