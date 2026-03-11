@@ -65,6 +65,10 @@ function getExpDataFields(expData, allRows, sessionTimes) {
   if (Array.isArray(allRows)) {
     for (const r of allRows) {
       if (!r) continue;
+      if (r.SONAId != null && r.SONAId !== '') {
+        subjectFromRows = r.SONAId;
+        break;
+      }
       if (r.SubjectId != null && r.SubjectId !== '') {
         subjectFromRows = r.SubjectId;
         break;
@@ -83,19 +87,21 @@ function getExpDataFields(expData, allRows, sessionTimes) {
   const startTime = exp.experiment_start_time != null ? exp.experiment_start_time : (exp.experimentStartTime != null ? exp.experimentStartTime : (sessionTimes && sessionTimes.experiment_start_time_fallback != null ? sessionTimes.experiment_start_time_fallback : ''));
   const endTime = sessionTimes && sessionTimes.experiment_end_time != null ? sessionTimes.experiment_end_time : '';
   const duration = sessionTimes && sessionTimes.experiment_duration != null ? sessionTimes.experiment_duration : '';
-  const subjectId =
-    exp.SubjectId != null && exp.SubjectId !== ''
-      ? exp.SubjectId
-      : (exp.SubjectID != null && exp.SubjectID !== ''
-        ? exp.SubjectID
-        : subjectFromRows);
+  const sonaIdValue =
+    (exp.SONAId != null && exp.SONAId !== '')
+      ? exp.SONAId
+      : (exp.SubjectId != null && exp.SubjectId !== ''
+        ? exp.SubjectId
+        : (exp.SubjectID != null && exp.SubjectID !== ''
+          ? exp.SubjectID
+          : subjectFromRows));
 
   return {
     device: exp.device != null && exp.device !== '' ? exp.device : fromRows.device,
     hand: exp.hand != null && exp.hand !== '' ? exp.hand : fromRows.hand,
-    SubjectId: subjectId,
-    // SONA ID is recorded on the Welcome page as SubjectId/SubjectID (Provo); we also fall back to any SubjectId/SubjectID/SonaId present in trial rows.
-    SonaId: subjectId,
+    SubjectId: sonaIdValue,
+    SonaId: sonaIdValue,
+    SONAId: sonaIdValue,
     experiment: exp.experiment != null ? exp.experiment : (exp.Experiment != null ? exp.Experiment : ''),
     experiment_start_time: startTime,
     experiment_end_time: endTime,
@@ -263,6 +269,7 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         experiment_start_time: expFields.experiment_start_time,
         SubjectId: expFields.SubjectId,
         SonaId: expFields.SonaId,
+        SONAId: expFields.SONAId,
         experiment_end_time: expFields.experiment_end_time,
         experiment_duration: expFields.experiment_duration,
         experiment: expFields.experiment,

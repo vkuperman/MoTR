@@ -90,8 +90,7 @@
             ">
           <br> By clicking on the button below you consent to participating in this study: <br><br>
           <br />
-          <button
-            @click="$magpie.addExpData({ SubjectId: $magpie.measurements.SubjectID, SubjectID: $magpie.measurements.SubjectID, SonaId: $magpie.measurements.SubjectID, experiment_start_time: new Date().toISOString() }); $magpie.nextScreen()">
+          <button @click="recordSonaAndProceed">
             Proceed
           </button>
 
@@ -547,6 +546,24 @@ export default {
         window_inner_width: window.innerWidth,
         window_inner_height: window.innerHeight
       };
+    },
+    recordSonaAndProceed() {
+      const id = (this.$magpie && this.$magpie.measurements && this.$magpie.measurements.SubjectID) ? String(this.$magpie.measurements.SubjectID).trim() : '';
+      this.$magpie.addExpData({
+        SubjectId: id,
+        SubjectID: id,
+        SonaId: id,
+        SONAId: id,
+        experiment_start_time: new Date().toISOString()
+      });
+      this.$magpie.addTrialData({
+        SONAId: id,
+        SubjectId: id,
+        SubjectID: id,
+        SonaId: id,
+        source: 'welcome'
+      });
+      this.$magpie.nextScreen();
     },
     recordResponse(trial) {
       const m = this.$magpie && this.$magpie.measurements ? this.$magpie.measurements : null;
