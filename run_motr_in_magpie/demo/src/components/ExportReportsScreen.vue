@@ -1,6 +1,6 @@
 <template>
   <Screen title="Thank you">
-    <Slide v-if="!submitted">
+    <Slide v-if="!skipSonaInput && !submitted">
       <p>
         Thank you for participating in this study. Press Submit to complete.
       </p>
@@ -21,7 +21,7 @@
       </div>
     </Slide>
     <Slide v-else>
-      <!-- Blank page after submit -->
+      <!-- Blank thank-you page (when skipSonaInput, export runs automatically) -->
       <div></div>
     </Slide>
   </Screen>
@@ -33,15 +33,21 @@ import stringify from 'csv-stringify/lib/sync';
 import JSZip from 'jszip';
 import magpieConfig from '../magpie.config.js';
 
+function generateUniqueAlphanumericId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
 function isFixationRow(row) {
   return row != null && (row.mousePositionX != null && row.mousePositionX !== '');
 }
 
-function buildFixationReport(allRows) {
+function buildFixationReport(allRows, participantId) {
   const fixationRows = allRows.filter(isFixationRow);
   if (fixationRows.length === 0) return '';
-  // Order fixations by text (ItemId) in the order they were read,
-  // and within each text by fixation time (scanpath order).
+  const pid = participantId != null && String(participantId) ? String(participantId) : '';
   const firstTimeByItem = {};
   for (const row of fixationRows) {
     const id = row.ItemId != null && row.ItemId !== '' ? row.ItemId : 'NO_ITEM';
@@ -60,15 +66,17 @@ function buildFixationReport(allRows) {
     const tB = b.responseTime || 0;
     return tA - tB;
   });
-  return stringify(fixationRows, {
-    columns: Object.keys(fixationRows[0]),
+  const rowsWithId = fixationRows.map(r => ({ participant_id: pid, ...r }));
+  return stringify(rowsWithId, {
+    columns: ['participant_id', ...Object.keys(fixationRows[0])],
     header: true
   });
 }
 
-function buildInterestAreaReport(allRows) {
+function buildInterestAreaReport(allRows, participantId) {
   const fixationRows = allRows.filter(isFixationRow);
   if (fixationRows.length === 0) return '';
+  const pid = participantId != null && String(participantId) ? String(participantId) : '';
 
   const byItem = {};
   for (const row of fixationRows) {
@@ -166,6 +174,7 @@ function buildInterestAreaReport(allRows) {
       const condition = (rows[0] && rows[0].Condition) != null ? rows[0].Condition : '';
 
       reportRows.push({
+        participant_id: pid,
         Experiment: experiment,
         Condition: condition,
         ItemId: itemId,
@@ -228,19 +237,30 @@ function blobToBase64(blob) {
 export default {
   name: 'ExportReportsScreen',
   components: { Screen, Slide },
+  props: {
+    skipSonaInput: { type: Boolean, default: false }
+  },
   data() {
     return {
       sonaId: '',
       submitted: false
     };
   },
+  mounted() {
+    if (this.skipSonaInput) {
+      this.submitDirectAndNext();
+    }
+  },
   methods: {
     async exportAndNext() {
       const allRows = this.$magpie.getAllData();
-      const fixationCsv = buildFixationReport(allRows);
-      const interestAreaCsv = buildInterestAreaReport(allRows);
-
-      const participantId = (this.$root && this.$root.participantId) || null;
+      let participantId = (this.$magpie.getExpData && this.$magpie.getExpData().ParticipantId) || (this.$root && this.$root.participantId) || null;
+      if (!participantId || String(participantId).trim() === '') {
+        participantId = generateUniqueAlphanumericId();
+        if (this.$magpie.addExpData) this.$magpie.addExpData({ ParticipantId: participantId });
+      }
+      const fixationCsv = buildFixationReport(allRows, participantId);
+      const interestAreaCsv = buildInterestAreaReport(allRows, participantId);
       const folderName = getResultsFolderName(participantId);
 
       if (fixationCsv || interestAreaCsv) {
@@ -270,6 +290,10 @@ export default {
       if (this.sonaId) {
         this.$magpie.addExpData({ SonaId: this.sonaId });
       }
+      this.submitted = true;
+      await this.exportAndNext();
+    },
+    async submitDirectAndNext() {
       this.submitted = true;
       await this.exportAndNext();
     }
