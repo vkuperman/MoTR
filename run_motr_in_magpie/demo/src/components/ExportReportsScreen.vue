@@ -160,10 +160,14 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
     };
   });
   const redundantIdColumns = ['SubjectId', 'SubjectID', 'SonaId', 'glb_SubjectId', 'glb_SubjectID', 'glb_SonaId', 'glb_SONAId'];
+  const keepIdColumns = ['SONAId', 'participant_id', 'ItemOrder'];
   const rowsForCsv = rowsWithId.map(row => {
     const copy = { ...row };
     redundantIdColumns.forEach(k => { delete copy[k]; });
-    Object.keys(copy).filter(k => k.startsWith('glb_')).forEach(k => { delete copy[k]; });
+    Object.keys(copy).forEach(k => {
+      if (k.startsWith('glb_')) delete copy[k];
+      else if ((/subjectid|sonaid/i.test(k) || k === 'SubjectId' || k === 'SubjectID' || k === 'SonaId') && !keepIdColumns.includes(k)) delete copy[k];
+    });
     return copy;
   });
   return stringify(rowsForCsv, {
