@@ -479,6 +479,10 @@ export default {
       const expEl = this.$el.querySelector(".experiment_id");
       if (!expEl) return;
       const durationMs = this.clickStartTime != null ? endTime - this.clickStartTime : null;
+      const subjectId =
+        this.$magpie && this.$magpie.measurements && this.$magpie.measurements.SubjectID
+          ? this.$magpie.measurements.SubjectID
+          : '';
       const payload = {
         Experiment: expEl.value,
         Condition: this.$el.querySelector(".condition_id").value,
@@ -490,6 +494,9 @@ export default {
         clickDurationMs: durationMs,
         relativeXInWord: this.relativeXInWord,
         relativeYInWord: this.relativeYInWord,
+        SubjectId: subjectId,
+        SubjectID: subjectId,
+        SonaId: subjectId
       };
       if (this.clickWordRect) {
         payload.wordPositionTop = this.clickWordRect.top;

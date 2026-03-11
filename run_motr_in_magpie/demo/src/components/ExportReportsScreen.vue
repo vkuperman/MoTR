@@ -51,6 +51,7 @@ function getResponseByItem(allRows) {
 
 function getExpDataFields(expData, allRows, sessionTimes) {
   const fromRows = { device: '', hand: '' };
+  let subjectFromRows = '';
   if (Array.isArray(allRows)) {
     for (let i = allRows.length - 1; i >= 0; i--) {
       const r = allRows[i];
@@ -61,16 +62,40 @@ function getExpDataFields(expData, allRows, sessionTimes) {
       }
     }
   }
+  if (Array.isArray(allRows)) {
+    for (const r of allRows) {
+      if (!r) continue;
+      if (r.SubjectId != null && r.SubjectId !== '') {
+        subjectFromRows = r.SubjectId;
+        break;
+      }
+      if (r.SubjectID != null && r.SubjectID !== '') {
+        subjectFromRows = r.SubjectID;
+        break;
+      }
+      if (r.SonaId != null && r.SonaId !== '') {
+        subjectFromRows = r.SonaId;
+        break;
+      }
+    }
+  }
   const exp = expData && typeof expData === 'object' ? expData : {};
   const startTime = exp.experiment_start_time != null ? exp.experiment_start_time : (exp.experimentStartTime != null ? exp.experimentStartTime : (sessionTimes && sessionTimes.experiment_start_time_fallback != null ? sessionTimes.experiment_start_time_fallback : ''));
   const endTime = sessionTimes && sessionTimes.experiment_end_time != null ? sessionTimes.experiment_end_time : '';
   const duration = sessionTimes && sessionTimes.experiment_duration != null ? sessionTimes.experiment_duration : '';
+  const subjectId =
+    exp.SubjectId != null && exp.SubjectId !== ''
+      ? exp.SubjectId
+      : (exp.SubjectID != null && exp.SubjectID !== ''
+        ? exp.SubjectID
+        : subjectFromRows);
+
   return {
     device: exp.device != null && exp.device !== '' ? exp.device : fromRows.device,
     hand: exp.hand != null && exp.hand !== '' ? exp.hand : fromRows.hand,
-    SubjectId: exp.SubjectId != null ? exp.SubjectId : (exp.SubjectID != null ? exp.SubjectID : ''),
-    // SONA ID is recorded on the Welcome page as SubjectId/SubjectID (Provo); we do not read it from the Thank you screen.
-    SonaId: exp.SubjectId != null ? exp.SubjectId : (exp.SubjectID != null ? exp.SubjectID : ''),
+    SubjectId: subjectId,
+    // SONA ID is recorded on the Welcome page as SubjectId/SubjectID (Provo); we also fall back to any SubjectId/SubjectID/SonaId present in trial rows.
+    SonaId: subjectId,
     experiment: exp.experiment != null ? exp.experiment : (exp.Experiment != null ? exp.Experiment : ''),
     experiment_start_time: startTime,
     experiment_end_time: endTime,
