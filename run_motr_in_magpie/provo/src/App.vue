@@ -91,7 +91,7 @@
           <br> By clicking on the button below you consent to participating in this study: <br><br>
           <br />
           <button 
-            @click="$magpie.addExpData({ SubjectId: $magpie.measurements.SubjectID}); $magpie.nextScreen()">
+            @click="$magpie.addExpData({ SubjectId: $magpie.measurements.SubjectID, experiment_start_time: new Date().toISOString() }); $magpie.nextScreen()">
             Proceed
           </button>
 

@@ -4,18 +4,8 @@
       <p>
         Thank you for participating in this study. Press Submit to complete.
       </p>
-      <div style="margin-top: 1em;">
-        <label>
-          SONA ID:
-          <input
-            type="text"
-            v-model="sonaId"
-            style="margin-left: 0.5em; padding: 0.2em 0.4em; min-width: 12em;"
-          />
-        </label>
-      </div>
       <div style="margin-top: 1.5em;">
-        <button :disabled="!sonaId" @click="submitSonaAndNext">
+        <button @click="submitSonaAndNext">
           Submit
         </button>
       </div>
@@ -44,10 +34,54 @@ function isFixationRow(row) {
   return row != null && (row.mousePositionX != null && row.mousePositionX !== '');
 }
 
-function buildFixationReport(allRows, participantId) {
+function getResponseByItem(allRows) {
+  const out = {};
+  if (!Array.isArray(allRows)) return out;
+  for (const r of allRows) {
+    if (!r) continue;
+    const itemId = r.ItemId != null && r.ItemId !== '' ? r.ItemId : (r.item_id != null && r.item_id !== '' ? r.item_id : null);
+    const resp = r.response != null ? String(r.response) : (r.responses && Array.isArray(r.responses) ? r.responses.join('|') : (r.responses && typeof r.responses === 'object' ? JSON.stringify(r.responses) : ''));
+    if (itemId != null && (resp !== '' || r.response !== undefined)) {
+      if (resp !== '' || out[itemId] == null) out[itemId] = resp;
+    }
+  }
+  return out;
+}
+
+function getExpDataFields(expData, allRows, sessionTimes) {
+  const fromRows = { device: '', hand: '' };
+  if (Array.isArray(allRows)) {
+    for (let i = allRows.length - 1; i >= 0; i--) {
+      const r = allRows[i];
+      if (r && (r.device != null && r.device !== '' || r.hand != null && r.hand !== '')) {
+        if (r.device != null && r.device !== '') fromRows.device = r.device;
+        if (r.hand != null && r.hand !== '') fromRows.hand = r.hand;
+        break;
+      }
+    }
+  }
+  const exp = expData && typeof expData === 'object' ? expData : {};
+  const startTime = exp.experiment_start_time != null ? exp.experiment_start_time : (exp.experimentStartTime != null ? exp.experimentStartTime : (sessionTimes && sessionTimes.experiment_start_time_fallback != null ? sessionTimes.experiment_start_time_fallback : ''));
+  const endTime = sessionTimes && sessionTimes.experiment_end_time != null ? sessionTimes.experiment_end_time : '';
+  const duration = sessionTimes && sessionTimes.experiment_duration != null ? sessionTimes.experiment_duration : '';
+  return {
+    device: exp.device != null && exp.device !== '' ? exp.device : fromRows.device,
+    hand: exp.hand != null && exp.hand !== '' ? exp.hand : fromRows.hand,
+    SubjectId: exp.SubjectId != null ? exp.SubjectId : (exp.SubjectID != null ? exp.SubjectID : ''),
+    SonaId: exp.SonaId != null ? exp.SonaId : '',
+    experiment: exp.experiment != null ? exp.experiment : (exp.Experiment != null ? exp.Experiment : ''),
+    experiment_start_time: startTime,
+    experiment_end_time: endTime,
+    experiment_duration: duration
+  };
+}
+
+function buildFixationReport(allRows, participantId, expData, sessionTimes) {
   const fixationRows = allRows.filter(isFixationRow);
   if (fixationRows.length === 0) return '';
   const pid = participantId != null && String(participantId) ? String(participantId) : '';
+  const expFields = getExpDataFields(expData, allRows, sessionTimes);
+  const responseByItem = getResponseByItem(allRows);
   const firstTimeByItem = {};
   for (const row of fixationRows) {
     const id = row.ItemId != null && row.ItemId !== '' ? row.ItemId : 'NO_ITEM';
@@ -66,17 +100,22 @@ function buildFixationReport(allRows, participantId) {
     const tB = b.responseTime || 0;
     return tA - tB;
   });
-  const rowsWithId = fixationRows.map(r => ({ participant_id: pid, ...r }));
+  const rowsWithId = fixationRows.map(r => {
+    const itemId = r.ItemId != null && r.ItemId !== '' ? r.ItemId : 'NO_ITEM';
+    return { participant_id: pid, ...r, response: responseByItem[itemId] != null ? responseByItem[itemId] : '', ...expFields };
+  });
   return stringify(rowsWithId, {
-    columns: ['participant_id', ...Object.keys(fixationRows[0])],
+    columns: Object.keys(rowsWithId[0]),
     header: true
   });
 }
 
-function buildInterestAreaReport(allRows, participantId) {
+function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) {
   const fixationRows = allRows.filter(isFixationRow);
   if (fixationRows.length === 0) return '';
   const pid = participantId != null && String(participantId) ? String(participantId) : '';
+  const expFields = getExpDataFields(expData, allRows, sessionTimes);
+  const responseByItem = getResponseByItem(allRows);
 
   const byItem = {};
   for (const row of fixationRows) {
@@ -173,8 +212,18 @@ function buildInterestAreaReport(allRows, participantId) {
       const experiment = (rows[0] && rows[0].Experiment) != null ? rows[0].Experiment : '';
       const condition = (rows[0] && rows[0].Condition) != null ? rows[0].Condition : '';
 
+      const response = responseByItem[itemId] != null ? responseByItem[itemId] : '';
       reportRows.push({
         participant_id: pid,
+        response,
+        device: expFields.device,
+        hand: expFields.hand,
+        experiment_start_time: expFields.experiment_start_time,
+        SubjectId: expFields.SubjectId,
+        SonaId: expFields.SonaId,
+        experiment_end_time: expFields.experiment_end_time,
+        experiment_duration: expFields.experiment_duration,
+        experiment: expFields.experiment,
         Experiment: experiment,
         Condition: condition,
         ItemId: itemId,
@@ -254,13 +303,27 @@ export default {
   methods: {
     async exportAndNext() {
       const allRows = this.$magpie.getAllData();
-      let participantId = (this.$magpie.getExpData && this.$magpie.getExpData().ParticipantId) || (this.$root && this.$root.participantId) || null;
+      const expData = (this.$magpie.getExpData && this.$magpie.getExpData()) || {};
+      let participantId = expData.ParticipantId || (this.$root && this.$root.participantId) || null;
       if (!participantId || String(participantId).trim() === '') {
         participantId = generateUniqueAlphanumericId();
         if (this.$magpie.addExpData) this.$magpie.addExpData({ ParticipantId: participantId });
       }
-      const fixationCsv = buildFixationReport(allRows, participantId);
-      const interestAreaCsv = buildInterestAreaReport(allRows, participantId);
+      participantId = String(participantId).trim();
+      const endTime = new Date();
+      let startTime = expData.experiment_start_time || expData.experimentStartTime;
+      if (!startTime && Array.isArray(allRows) && allRows.length > 0) {
+        const minT = Math.min(...allRows.map(r => (r.responseTime != null && typeof r.responseTime === 'number' ? r.responseTime : Infinity)).filter(t => t !== Infinity));
+        if (minT !== Infinity && Number.isFinite(minT)) startTime = new Date(minT).toISOString();
+      }
+      const durationMs = startTime ? (endTime.getTime() - new Date(startTime).getTime()) : '';
+      const sessionTimes = {
+        experiment_end_time: endTime.toISOString(),
+        experiment_duration: durationMs !== '' ? String(durationMs) : '',
+        experiment_start_time_fallback: startTime || ''
+      };
+      const fixationCsv = buildFixationReport(allRows, participantId, expData, sessionTimes);
+      const interestAreaCsv = buildInterestAreaReport(allRows, participantId, expData, sessionTimes);
       const folderName = getResultsFolderName(participantId);
 
       if (fixationCsv || interestAreaCsv) {
@@ -272,7 +335,7 @@ export default {
             const res = await fetch(uploadUrl.trim(), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ participantId: participantId || 'unknown', zipBase64 })
+              body: JSON.stringify({ participantId, zipBase64 })
             });
             if (!res.ok) {
               const errText = await res.text();
