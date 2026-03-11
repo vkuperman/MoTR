@@ -114,6 +114,7 @@
             <input type="hidden" class="item_id" :value="trial.item_id">
             <input type="hidden" class="experiment_id" :value="trial.experiment_id">
             <input type="hidden" class="condition_id" :value="trial.condition_id">
+            <input type="hidden" class="trial_index" :value="i + 1">
           </form>
           <div class="oval-cursor"></div>
           <template>
@@ -482,10 +483,13 @@ export default {
         this.$magpie && this.$magpie.measurements && this.$magpie.measurements.SubjectID
           ? this.$magpie.measurements.SubjectID
           : '';
+      const trialIndexEl = this.$el.querySelector(".trial_index");
+      const presentationOrder = trialIndexEl && trialIndexEl.value !== '' ? parseInt(trialIndexEl.value, 10) : null;
       const payload = {
         Experiment: expEl.value,
         Condition: this.$el.querySelector(".condition_id").value,
         ItemId: this.$el.querySelector(".item_id").value,
+        presentation_order: presentationOrder,
         Index: this.clickWordIndex !== null && this.clickWordIndex !== -1 ? parseInt(this.clickWordIndex, 10) : this.clickWordIndex,
         Word: this.clickWord,
         mousePositionX: this.clickStartX,

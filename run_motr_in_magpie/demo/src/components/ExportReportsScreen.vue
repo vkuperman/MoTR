@@ -121,13 +121,21 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
       firstTimeByItem[id] = t;
     }
   }
-  // Derive presentation order of items based on first fixation time.
-  const itemOrder = {};
+  // Presentation order: prefer recorded presentation_order (trial index) from the app; fallback to order by first fixation time.
+  const itemOrderByTime = {};
   Object.keys(firstTimeByItem)
     .sort((a, b) => (firstTimeByItem[a] || 0) - (firstTimeByItem[b] || 0))
     .forEach((id, idx) => {
-      itemOrder[id] = idx + 1; // 1-based order
+      itemOrderByTime[id] = idx + 1;
     });
+  const itemOrderFromData = {};
+  for (const r of fixationRows) {
+    const id = r.ItemId != null && r.ItemId !== '' ? r.ItemId : 'NO_ITEM';
+    if (id && r.presentation_order != null && r.presentation_order !== '') {
+      const val = Number(r.presentation_order);
+      if (!Number.isNaN(val)) itemOrderFromData[id] = val;
+    }
+  }
 
   fixationRows.sort((a, b) => {
     const idA = a.ItemId != null && a.ItemId !== '' ? a.ItemId : 'NO_ITEM';
@@ -147,10 +155,11 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
     const positionInText = r.Index != null && r.Index !== '' ? r.Index : '';
     const lineNumber = r.line_number != null && r.line_number !== '' ? r.line_number : '';
     const positionInLine = r.position_in_line != null && r.position_in_line !== '' ? r.position_in_line : '';
+    const order = itemOrderFromData[itemId] != null ? itemOrderFromData[itemId] : (itemOrderByTime[itemId] != null ? itemOrderByTime[itemId] : '');
     return {
       ...r,
       participant_id: pid,
-      ItemOrder: itemOrder[itemId] != null ? itemOrder[itemId] : '',
+      ItemOrder: order,
       FixationIndex: fixationIndexByItem[itemId],
       position_in_text: positionInText,
       line_number: lineNumber,
@@ -195,6 +204,15 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
   for (const itemId of Object.keys(byItem)) {
     const rowsForItem = byItem[itemId];
     firstTimeByItem[itemId] = Math.min(...rowsForItem.map(r => r.responseTime || 0));
+  }
+  const presentationOrderByItem = {};
+  for (const itemId of Object.keys(byItem)) {
+    const rowsForItem = byItem[itemId];
+    const firstWithOrder = rowsForItem.find(r => r.presentation_order != null && r.presentation_order !== '');
+    if (firstWithOrder) {
+      const val = Number(firstWithOrder.presentation_order);
+      if (!Number.isNaN(val)) presentationOrderByItem[itemId] = val;
+    }
   }
 
   let itemOrderCounter = 0;
@@ -294,7 +312,7 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         Experiment: experiment,
         Condition: condition,
         ItemId: itemId,
-        ItemOrder: itemOrderCounter,
+        ItemOrder: presentationOrderByItem[itemId] != null ? presentationOrderByItem[itemId] : itemOrderCounter,
         position_in_text: positionInText,
         line_number: lineNumber,
         position_in_line: positionInLine,
