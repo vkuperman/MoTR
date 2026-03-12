@@ -347,8 +347,8 @@ export default {
       if (oval) {
         oval.classList.remove('grow');
         oval.classList.remove('blank');
-        oval.style.width = '';
-        oval.style.height = '';
+        oval.style.width = '0px';
+        oval.style.height = '0px';
       }
       this.currentIndex = null;
       this.isClickHeld = false;
@@ -364,6 +364,9 @@ export default {
       this.clickStartY = y;
 
       const oval = this.$el.querySelector(".oval-cursor");
+      if (oval) {
+        oval.classList.add('grow');
+      }
       const { width: charWidth } = this.getCharSizePx();
       const line = this.getLineClosestTo(y);
       const charsLeft = 4;
@@ -372,7 +375,6 @@ export default {
       const ovalWidthPx = totalChars * charWidth;
       const ovalHeightPx = line ? line.lineHeight : 20;
       const ovalCenterY = line ? (line.lineTop + line.lineBottom) / 2 : y;
-      oval.classList.add('grow');
       oval.style.width = `${ovalWidthPx}px`;
       oval.style.height = `${ovalHeightPx}px`;
       oval.style.left = `${x + (charsRight - charsLeft) / 2 * charWidth}px`;
@@ -469,8 +471,8 @@ export default {
       if (oval) {
         oval.classList.remove('grow');
         oval.classList.remove('blank');
-        oval.style.width = '';
-        oval.style.height = '';
+        oval.style.width = '0px';
+        oval.style.height = '0px';
       }
       this.isClickHeld = false;
       this.currentIndex = null;
@@ -487,6 +489,7 @@ export default {
       const presentationOrder = trialIndexEl && trialIndexEl.value !== '' ? parseInt(trialIndexEl.value, 10) : null;
       const spans = this.$el.querySelectorAll('.readingText span[data-index]');
       const totalWordsInItem = spans && spans.length ? spans.length : null;
+      const allWords = spans && spans.length ? Array.from(spans).map((s) => s.innerHTML).join(' ') : null;
       const payload = {
         Experiment: expEl.value,
         Condition: this.$el.querySelector(".condition_id").value,
@@ -500,6 +503,7 @@ export default {
         relativeXInWord: this.relativeXInWord,
         relativeYInWord: this.relativeYInWord,
         totalWordsInItem: totalWordsInItem,
+        allWords: allWords,
         SubjectId: subjectId,
         SubjectID: subjectId,
         SonaId: subjectId
@@ -623,29 +627,22 @@ export default {
   .oval-cursor {
     position: fixed;
     z-index: 2;
-    width: 1px;
-    height: 1px;
+    width: 0;
+    height: 0;
     transform: translate(-50%, -50%);
     background-color: white;
     mix-blend-mode: difference;
     border-radius: 50%;
     pointer-events: none;
-    transition: width 0.5s, height 0.5s;
-  } 
-  .oval-cursor.grow.blank {
-    width: 80px;
-    height: 13px;
+    transition: none;
   }
   .oval-cursor.grow {
-    width: 102px;
-    height: 38px;
     border-radius: 50%;
     box-shadow: 30px 0 8px -4px rgba(255, 255, 255, 0.1), -30px 0 8px -4px rgba(255, 255, 255, 0.1);
     background-color: rgba(255, 255, 255, 0.3);
     background-blend-mode: screen;
     pointer-events: none;
-    transition: width 0.5s, height 0.5s;
-    filter:blur(3px);
+    filter: blur(3px);
   }
   .oval-cursor.grow::before {
     content: "";

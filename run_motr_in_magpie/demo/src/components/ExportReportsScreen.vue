@@ -247,6 +247,15 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
 
     rows.sort((a, b) => (a.responseTime || 0) - (b.responseTime || 0));
 
+    // Try to get the full word list for this item from any trial row (allWords recorded in App.vue).
+    let wordsFromTrials = null;
+    for (const r of rows) {
+      if (r.allWords != null && r.allWords !== '') {
+        wordsFromTrials = String(r.allWords).split(' ');
+        break;
+      }
+    }
+
     const wordIndices = new Set();
     for (let i = 1; i <= totalWords; i++) wordIndices.add(i);
     for (const r of rows) if (r.Index != null && r.Index >= 1) wordIndices.add(Number(r.Index));
@@ -315,6 +324,11 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         if (nextClick != null && nextClick.Index != null) {
           nextClickRegression = Number(nextClick.Index) < wordIndex ? '1' : '0';
         }
+      }
+
+      // If no click-based word text, fall back to the recorded word list for skipped words.
+      if ((!wordText || wordText === '') && wordsFromTrials && wordsFromTrials[wordIndex - 1] != null) {
+        wordText = wordsFromTrials[wordIndex - 1];
       }
 
       const experiment = (rows[0] && rows[0].Experiment) != null ? rows[0].Experiment : '';
