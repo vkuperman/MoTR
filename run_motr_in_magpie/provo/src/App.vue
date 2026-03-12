@@ -355,10 +355,10 @@ export default {
             left = curr.left;
             right = curr.right;
             if (isFirstLine) {
-              left -= charWidth;
+              left -= charWidth / 2;
             }
             if (isLastLine) {
-              right += charWidth;
+              right += charWidth / 2;
             }
           } else if (i === 0) {
             const next = lineItems[i + 1].rect;
@@ -366,7 +366,7 @@ export default {
             left = curr.left;
             right = midNext;
             if (isFirstLine) {
-              left -= charWidth;
+              left -= charWidth / 2;
             }
           } else if (i === n - 1) {
             const prev = lineItems[i - 1].rect;
@@ -374,7 +374,7 @@ export default {
             left = midPrev;
             right = curr.right;
             if (isLastLine) {
-              right += charWidth;
+              right += charWidth / 2;
             }
           } else {
             const prev = lineItems[i - 1].rect;
