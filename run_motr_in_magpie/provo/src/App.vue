@@ -331,6 +331,9 @@ export default {
         }
       }
 
+      const { width: baseCharWidth } = this.getCharSizePx();
+      const charWidth = baseCharWidth && Number.isFinite(baseCharWidth) ? baseCharWidth : 10;
+
       lines.forEach((lineItems, lineIdx) => {
         const n = lineItems.length;
         if (!n) return;
@@ -344,19 +347,35 @@ export default {
           let left;
           let right;
 
-          if (i === 0 && n > 1) {
+          const isFirstLine = (lineIdx === 0);
+          const isLastLine = (lineIdx === lines.length - 1);
+
+          if (n === 1) {
+            // Single word on this line
+            left = curr.left;
+            right = curr.right;
+            if (isFirstLine) {
+              left -= charWidth;
+            }
+            if (isLastLine) {
+              right += charWidth;
+            }
+          } else if (i === 0) {
             const next = lineItems[i + 1].rect;
             const midNext = (curr.right + next.left) / 2;
             left = curr.left;
             right = midNext;
-          } else if (i === n - 1 && n > 1) {
+            if (isFirstLine) {
+              left -= charWidth;
+            }
+          } else if (i === n - 1) {
             const prev = lineItems[i - 1].rect;
             const midPrev = (prev.right + curr.left) / 2;
             left = midPrev;
             right = curr.right;
-          } else if (n === 1) {
-            left = curr.left;
-            right = curr.right;
+            if (isLastLine) {
+              right += charWidth;
+            }
           } else {
             const prev = lineItems[i - 1].rect;
             const next = lineItems[i + 1].rect;
