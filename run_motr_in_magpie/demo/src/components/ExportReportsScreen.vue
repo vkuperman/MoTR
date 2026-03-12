@@ -22,10 +22,10 @@ import { Screen, Slide } from 'magpie-base';
 import stringify from 'csv-stringify/lib/sync';
 import JSZip from 'jszip';
 import magpieConfig from '../magpie.config.js';
-import provo_list1 from '../../provo/trials/provo_items_list1.tsv';
-import provo_list2 from '../../provo/trials/provo_items_list2.tsv';
-import provo_list3 from '../../provo/trials/provo_items_list3.tsv';
-import provo_practice from '../../provo/trials/provo_items_practice.tsv';
+import provo_list1 from '../provo/trials/provo_items_list1.tsv';
+import provo_list2 from '../provo/trials/provo_items_list2.tsv';
+import provo_list3 from '../provo/trials/provo_items_list3.tsv';
+import provo_practice from '../provo/trials/provo_items_practice.tsv';
 
 function generateUniqueAlphanumericId() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
