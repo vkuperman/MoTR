@@ -22,6 +22,10 @@ import { Screen, Slide } from 'magpie-base';
 import stringify from 'csv-stringify/lib/sync';
 import JSZip from 'jszip';
 import magpieConfig from '../magpie.config.js';
+import provo_list1 from '../../provo/trials/provo_items_list1.tsv';
+import provo_list2 from '../../provo/trials/provo_items_list2.tsv';
+import provo_list3 from '../../provo/trials/provo_items_list3.tsv';
+import provo_practice from '../../provo/trials/provo_items_practice.tsv';
 
 function generateUniqueAlphanumericId() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -116,6 +120,18 @@ const FIXATION_CSV_COLUMNS = [
   'device', 'hand', 'experiment_start_time', 'experiment_end_time', 'experiment_duration',
   'experiment'
 ];
+
+// Build a lookup from Provo ItemId to its full text, so we can
+// fill the word column for skipped words in the interest-area report.
+const allProvoItems = [...provo_practice, ...provo_list1, ...provo_list2, ...provo_list3];
+const provoTextByItemId = {};
+for (const trial of allProvoItems) {
+  const id = trial.item_id != null ? trial.item_id : (trial.ItemId != null ? trial.ItemId : null);
+  const text = trial.text != null ? trial.text : '';
+  if (id != null && text !== '') {
+    provoTextByItemId[String(id)] = String(text);
+  }
+}
 
 const INTEREST_AREA_CSV_COLUMNS = [
   'participant_id', 'SONAId', 'Condition', 'ItemId', 'text_presentation_order',
@@ -247,14 +263,9 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
 
     rows.sort((a, b) => (a.responseTime || 0) - (b.responseTime || 0));
 
-    // Try to get the full word list for this item from any trial row (allWords recorded in App.vue).
-    let wordsFromTrials = null;
-    for (const r of rows) {
-      if (r.allWords != null && r.allWords !== '') {
-        wordsFromTrials = String(r.allWords).split(' ');
-        break;
-      }
-    }
+    // Get the full word list for this item from the Provo trial texts.
+    const textForItem = provoTextByItemId[String(itemId)] || '';
+    const wordsFromTrials = textForItem ? String(textForItem).split(' ') : null;
 
     const wordIndices = new Set();
     for (let i = 1; i <= totalWords; i++) wordIndices.add(i);
