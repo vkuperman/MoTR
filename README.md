@@ -56,3 +56,19 @@ You need **Git** installed: https://git-scm.com/download/win
 - `api/` – Upload-results serverless API (email + optional GitHub storage). See [api/README.md](api/README.md) for env vars and saving reports to GitHub.
 
 Only the **demo** folder is set up to run with `npm install` and `npm run serve` from this repo.
+
+## Exported results and new columns
+
+When you complete a Provo session, the app creates a ZIP archive containing:
+
+- `fixation_report.csv` – one row per click/fixation.
+- `interest_area_report.csv` – one row per word, with aggregated click information.
+
+For each row, the following participant-level fields are included:
+
+- `SubjectId` – participant identifier used within the experiment.
+- `SonaId` – the 5-digit SONA ID entered on the Welcome screen.
+- `device` – reported input device (mouse/trackpad/other).
+- `hand` – reported hand used during the experiment.
+
+For each text item, the participant’s answer to the comprehension question is stored in the `response` column in both CSV files. The same `SonaId` value is repeated on every row for that participant, which makes it easier to merge these files with other datasets keyed by SONA ID.
