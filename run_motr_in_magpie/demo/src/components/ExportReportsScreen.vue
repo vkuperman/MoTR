@@ -109,7 +109,7 @@ function getExpDataFields(expData, allRows, sessionTimes) {
 
 const FIXATION_CSV_COLUMNS = [
   'participant_id', 'SONAId', 'Condition', 'ItemId', 'text_presentation_order', 'WordIndex', 'Word',
-  'responseTime', 'mousePositionX', 'mousePositionY', 'clickDurationMs',
+  'responseTime', 'mousePositionX', 'mousePositionY', 'Regression', 'clickDurationMs',
   'relativeXInWord', 'relativeYInWord',
   'wordPositionTop', 'wordPositionLeft', 'wordPositionBottom', 'wordPositionRight',
   'line_number', 'position_in_line', 'response', 'position_in_text',
@@ -119,13 +119,14 @@ const FIXATION_CSV_COLUMNS = [
 
 const INTEREST_AREA_CSV_COLUMNS = [
   'participant_id', 'SONAId', 'Condition', 'ItemId', 'text_presentation_order',
-  'word_index', 'word', 'response', 'position_in_text', 'line_number', 'position_in_line',
+  'word_index', 'WordIndex', 'word', 'response', 'line_number', 'position_in_line',
   'click_count', 'skipped',
   'first_click_x', 'first_click_duration_ms', 'total_duration_ms', 'next_click_regression',
   'x_distance_from_previous_click_px', 'x_distance_from_previous_click_chars',
   'first_click_x_from_word_left_chars', 'first_click_x_from_word_center_chars',
   'first_click_x_from_line_start_px', 'first_click_x_from_line_start_chars',
-  'device', 'hand', 'experiment_start_time', 'experiment_end_time', 'experiment_duration'
+  'device', 'hand', 'experiment_start_time', 'experiment_end_time', 'experiment_duration',
+  'experiment'
 ];
 
 function buildFixationReport(allRows, participantId, expData, sessionTimes) {
@@ -147,6 +148,26 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
     };
   });
 
+  // Compute Regression per fixation within each text (ItemId):
+  // Regression = 1 if current click's X is less than previous click's X for that item, else 0.
+  const byItemForFixation = {};
+  for (const row of rowsWithMeta) {
+    const id = row.ItemId != null && row.ItemId !== '' ? row.ItemId : 'NO_ITEM';
+    if (!byItemForFixation[id]) byItemForFixation[id] = [];
+    byItemForFixation[id].push(row);
+  }
+  for (const itemId of Object.keys(byItemForFixation)) {
+    const group = byItemForFixation[itemId].slice().sort((a, b) => (a.responseTime || 0) - (b.responseTime || 0));
+    let prevX = null;
+    for (const r of group) {
+      const x = r.mousePositionX != null && r.mousePositionX !== '' ? Number(r.mousePositionX) : null;
+      let regression = '0';
+      if (prevX != null && x != null && x < prevX) regression = '1';
+      if (x != null) prevX = x;
+      r.Regression = regression;
+    }
+  }
+
   const rowsForCsv = rowsWithMeta.map(row => {
     const out = {};
     const val = (key) => (row[key] != null && row[key] !== '' ? row[key] : '');
@@ -160,6 +181,7 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
     out.responseTime = val('responseTime');
     out.mousePositionX = val('mousePositionX');
     out.mousePositionY = val('mousePositionY');
+    out.Regression = val('Regression');
     out.clickDurationMs = val('clickDurationMs');
     out.relativeXInWord = val('relativeXInWord');
     out.relativeYInWord = val('relativeYInWord');
@@ -176,7 +198,9 @@ function buildFixationReport(allRows, participantId, expData, sessionTimes) {
     out.experiment_start_time = val('experiment_start_time');
     out.experiment_end_time = val('experiment_end_time');
     out.experiment_duration = val('experiment_duration');
-    out.experiment = val('experiment');
+    out.experiment =
+      val('experiment') ||
+      (magpieConfig && (magpieConfig.experimentName || magpieConfig.experimentId || magpieConfig.name || 'MoTR_Click'));
     return out;
   });
 
@@ -332,7 +356,7 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         SONAId: expFields.SONAId,
         experiment_end_time: expFields.experiment_end_time,
         experiment_duration: expFields.experiment_duration,
-        experiment: expFields.experiment,
+        experiment: expFields.experiment || (magpieConfig && (magpieConfig.experimentName || magpieConfig.experimentId || magpieConfig.name || 'MoTR_Click')),
         Experiment: experiment,
         Condition: condition,
         ItemId: itemId,
@@ -369,10 +393,10 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
       ItemId: val('ItemId'),
       text_presentation_order: val('text_presentation_order'),
       word_index: val('word_index'),
+      WordIndex: val('word_index'),
       // Only report a word when that word had at least one click.
       word: (row.click_count != null && Number(row.click_count) > 0) ? val('word') : '',
       response: val('response'),
-      position_in_text: val('position_in_text'),
       line_number: val('line_number'),
       position_in_line: val('position_in_line'),
       click_count: val('click_count'),
@@ -391,7 +415,8 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
       hand: val('hand'),
       experiment_start_time: val('experiment_start_time'),
       experiment_end_time: val('experiment_end_time'),
-      experiment_duration: val('experiment_duration')
+      experiment_duration: val('experiment_duration'),
+      experiment: val('experiment')
     };
   });
 
