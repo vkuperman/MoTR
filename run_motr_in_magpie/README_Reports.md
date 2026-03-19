@@ -37,6 +37,10 @@ Each row corresponds to **one mouse click (fixation)** on a word.
 - **position_in_line**: Position of the word within its line (1 = leftmost word on that line).
 - **response**: Participant’s comprehension response for this **item** (e.g., answer to the post-text question). The same value is repeated for all fixations belonging to the same item.
 - **position_in_text**: Same logical position as `WordIndex` (1-based index of the word within the text item).
+- **text_total_viewing_time_ms**: Total viewing time of the **page** (text item) in milliseconds: time from the first fixation to the last fixation on that item (same value for all fixations belonging to the same item).
+- **saccade_start_x**, **saccade_start_y**, **saccade_start_time**: For the saccade **from this fixation to the next** (within the same item): start position and timestamp. Same as this row’s `mousePositionX`, `mousePositionY`, `responseTime`.
+- **saccade_end_x**, **saccade_end_y**, **saccade_end_time**: End position and timestamp of the saccade (next fixation’s coordinates and time). Empty on the last fixation of an item.
+- **saccade_length_px**: Length of the saccade in pixels (Euclidean distance from start to end). Empty on the last fixation of an item.
 - **device**: Device type reported in the session (e.g., `"mouse"`, `"trackpad"` or similar).
 - **hand**: Reported hand used for the mouse (e.g., `"left"`, `"right"`), if provided.
 - **experiment_start_time**: ISO 8601 start time of the experiment / session. Taken from experiment data if present; otherwise approximated from the first recorded response time.
@@ -57,7 +61,6 @@ Each row corresponds to **one word position** in a text item (whether that word 
 - **text_presentation_order**: Order in which the text item appeared in the session (same value for all rows belonging to a given item).
 
 - **word_index**: Position of this word within the text item (1-based). Every possible word index for the item gets a row, even if the word was never clicked.
-- **WordIndex**: Duplicate of `word_index`, kept for compatibility with other analyses.
 - **word**: The word string **only if it was clicked at least once**. This field is left blank for words that were skipped (no clicks). To populate these blanks for skipped words, use the companion R script described below to join in information from the Provo items TSV files.
 - **response**: Participant’s comprehension response for this item (same as `response` in the fixation report; identical for all word positions within the same item).
 - **line_number**: Line number in the rendered text where this word is located (taken from the first click on this word; blank if the word was never clicked, and can be filled for skipped words via the R script).
@@ -68,7 +71,20 @@ Each row corresponds to **one word position** in a text item (whether that word 
   - `"1"` = no clicks on this word (`click_count = 0`).  
   - `"0"` = at least one click on this word (`click_count > 0`).
 
+- **IA_FIRST_RUN_DWELL_TIME** (gaze duration): Sum of the duration of all fixations on this interest area **before it is exited** (to the left or to the right). That is, the duration of the first run of consecutive fixations on this word, in milliseconds.
+- **IA_DWELL_TIME** (total fixation duration): Sum of **all** fixations on this interest area, including gaze duration and all regressions, in milliseconds (same as `total_duration_ms`).
+- **IA_FIRST_FIXATION_DURATION**: Duration (in milliseconds) of the **first fixation/click** on this interest area.
+- **go_past_time_ms**: Sum of all fixations made on this word from first entry **up to the point when the eyes go past it** (i.e., first time the reader moves to a later word). Excludes time spent on this word after regressing back into it.
+- **IA_REGRESSION_IN**: Whether a regression was made **from another interest area into** the current interest area.  
+  - `"1"` = at least one entry into this word was from a later word (regression-in).  
+  - `"0"` = no regression-in.
+- **IA_REGRESSION_OUT**: Whether regression(s) were made **from the current interest area to earlier interest areas** (e.g., previous parts of the sentence) **before leaving that interest area in a forward direction**.  
+  - `"1"` = at least one saccade from this word went to an earlier word.  
+  - `"0"` = no regression-out.
+- **text_total_viewing_time_ms**: Total viewing time of the **page** (text item) in milliseconds: from first fixation to last fixation on that item. Same value for all rows belonging to the same item.
+
 - **first_click_x**: Screen X coordinate (in pixels) of the **first click** on this word.
+- **first_click_y**: Screen Y coordinate (in pixels) of the **first click** on this word.
 - **first_click_duration_ms**: Duration (in milliseconds) of the **first click** on this word.
 - **total_duration_ms**: Sum of `clickDurationMs` across **all clicks** on this word, in milliseconds.
 - **next_click_regression**: Whether the **next click after this word’s last click** was a regression in word order:  
