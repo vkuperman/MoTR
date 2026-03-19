@@ -378,6 +378,28 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         if (firstClick.xFromLineStartChars != null) {
           firstClickXFromLineStartChars = Number(firstClick.xFromLineStartChars).toFixed(4);
         }
+        // Fallback: derive line-start distances from observed clicked words on same line.
+        if (firstClickXFromLineStartPx === '' && firstClick.line_number != null && firstClick.line_number !== '') {
+          const sameLine = rows.filter(r =>
+            r.line_number != null &&
+            r.line_number !== '' &&
+            String(r.line_number) === String(firstClick.line_number) &&
+            r.wordPositionLeft != null &&
+            r.wordPositionLeft !== ''
+          );
+          if (sameLine.length > 0) {
+            const lineStartX = Math.min(...sameLine.map(r => Number(r.wordPositionLeft)).filter(v => Number.isFinite(v)));
+            if (Number.isFinite(lineStartX) && firstClick.mousePositionX != null && firstClick.mousePositionX !== '') {
+              const xFromLineStart = Number(firstClick.mousePositionX) - lineStartX;
+              if (Number.isFinite(xFromLineStart)) {
+                firstClickXFromLineStartPx = xFromLineStart.toFixed(2);
+                if (charWidth && charWidth > 0) {
+                  firstClickXFromLineStartChars = (xFromLineStart / charWidth).toFixed(4);
+                }
+              }
+            }
+          }
+        }
 
         const prevClicks = rows.filter(r => (r.responseTime || 0) < (firstClick.responseTime || 0) && r.Index != null && Number(r.Index) !== wordIndex);
         const prevClick = prevClicks.length ? prevClicks[prevClicks.length - 1] : null;
