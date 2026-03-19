@@ -9,6 +9,33 @@ Both files are generated and zipped at the end of each session and uploaded acco
 
 ---
 
+## Where to place zipped result files
+
+For post-processing with `analysis/fill_interest_area_metadata.R`, place participant ZIP files in:
+
+- `run_motr_in_magpie/Results/`
+
+Expected ZIP naming pattern (default script setting):
+
+- `motr_results_*.zip`
+
+The script automatically:
+
+1. Finds ZIPs in `run_motr_in_magpie/Results/`
+2. Extracts each `interest_area_report.csv`
+3. Combines them into `interest_area_report_all_participants.csv`
+4. Fills metadata (`word`, `line_number`, `position_in_line`)
+5. Writes `interest_area_report_filled.csv`
+
+Run from `run_motr_in_magpie`:
+
+```r
+setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+source("analysis/fill_interest_area_metadata.R")
+```
+
+---
+
 ## Fixation report (`fixation_report.csv`)
 
 Each row corresponds to **one mouse click (fixation)** on a word.
@@ -37,6 +64,10 @@ Each row corresponds to **one mouse click (fixation)** on a word.
 - **position_in_line**: Position of the word within its line (1 = leftmost word on that line).
 - **response**: Participant’s comprehension response for this **item** (e.g., answer to the post-text question). The same value is repeated for all fixations belonging to the same item.
 - **position_in_text**: Same logical position as `WordIndex` (1-based index of the word within the text item).
+- **text_total_viewing_time_ms**: Total viewing time of the **page** (text item) in milliseconds: time from the first fixation to the last fixation on that item (same value for all fixations belonging to the same item).
+- **saccade_start_x**, **saccade_start_y**, **saccade_start_time**: For the saccade **from this fixation to the next** (within the same item): start position and timestamp. Same as this row’s `mousePositionX`, `mousePositionY`, `responseTime`.
+- **saccade_end_x**, **saccade_end_y**, **saccade_end_time**: End position and timestamp of the saccade (next fixation’s coordinates and time). Empty on the last fixation of an item.
+- **saccade_length_px**: Length of the saccade in pixels (Euclidean distance from start to end). Empty on the last fixation of an item.
 - **device**: Device type reported in the session (e.g., `"mouse"`, `"trackpad"` or similar).
 - **hand**: Reported hand used for the mouse (e.g., `"left"`, `"right"`), if provided.
 - **experiment_start_time**: ISO 8601 start time of the experiment / session. Taken from experiment data if present; otherwise approximated from the first recorded response time.
@@ -57,7 +88,6 @@ Each row corresponds to **one word position** in a text item (whether that word 
 - **text_presentation_order**: Order in which the text item appeared in the session (same value for all rows belonging to a given item).
 
 - **word_index**: Position of this word within the text item (1-based). Every possible word index for the item gets a row, even if the word was never clicked.
-- **WordIndex**: Duplicate of `word_index`, kept for compatibility with other analyses.
 - **word**: The word string **only if it was clicked at least once**. This field is left blank for words that were skipped (no clicks). To populate these blanks for skipped words, use the companion R script described below to join in information from the Provo items TSV files.
 - **response**: Participant’s comprehension response for this item (same as `response` in the fixation report; identical for all word positions within the same item).
 - **line_number**: Line number in the rendered text where this word is located (taken from the first click on this word; blank if the word was never clicked, and can be filled for skipped words via the R script).
@@ -68,9 +98,20 @@ Each row corresponds to **one word position** in a text item (whether that word 
   - `"1"` = no clicks on this word (`click_count = 0`).  
   - `"0"` = at least one click on this word (`click_count > 0`).
 
+- **IA_FIRST_RUN_DWELL_TIME** (gaze duration): Sum of the duration of all fixations on this interest area **before it is exited** (to the left or to the right). That is, the duration of the first run of consecutive fixations on this word, in milliseconds.
+- **IA_DWELL_TIME** (total fixation duration): Sum of **all** fixations on this interest area, including gaze duration and all regressions, in milliseconds (same as `total_duration_ms`).
+- **IA_FIRST_FIXATION_DURATION**: Duration (in milliseconds) of the **first fixation/click** on this interest area.
+- **go_past_time_ms**: Sum of all fixations made on this word from first entry **up to the point when the eyes go past it** (i.e., first time the reader moves to a later word). Excludes time spent on this word after regressing back into it.
+- **IA_REGRESSION_IN**: Whether a regression was made **from another interest area into** the current interest area.  
+  - `"1"` = at least one entry into this word was from a later word (regression-in).  
+  - `"0"` = no regression-in.
+- **IA_REGRESSION_OUT**: Whether regression(s) were made **from the current interest area to earlier interest areas** (e.g., previous parts of the sentence) **before leaving that interest area in a forward direction**.  
+  - `"1"` = at least one saccade from this word went to an earlier word.  
+  - `"0"` = no regression-out.
+- **text_total_viewing_time_ms**: Total viewing time of the **page** (text item) in milliseconds: from first fixation to last fixation on that item. Same value for all rows belonging to the same item.
+
 - **first_click_x**: Screen X coordinate (in pixels) of the **first click** on this word.
-- **first_click_duration_ms**: Duration (in milliseconds) of the **first click** on this word.
-- **total_duration_ms**: Sum of `clickDurationMs` across **all clicks** on this word, in milliseconds.
+- **first_click_y**: Screen Y coordinate (in pixels) of the **first click** on this word.
 - **next_click_regression**: Whether the **next click after this word’s last click** was a regression in word order:  
   - `"1"` = the next click was on an **earlier** word (lower `word_index`, indicating a regression).  
   - `"0"` = the next click was on the same or a later word (no regression).  
@@ -97,11 +138,11 @@ Each row corresponds to **one word position** in a text item (whether that word 
 
 For interest-area rows where the word was **not clicked** (`skipped = "1"`), the `word`, `line_number`, and `position_in_line` columns are left blank by the JavaScript export. To fill these values, you can run the accompanying R script (for example, saved as `analysis/fill_interest_area_metadata.R`):
 
-1. The script reads the exported `interest_area_report.csv`.
-2. It reads the Provo items TSV files (e.g., `provo/trials/provo_items_*.tsv`), which contain the text and positional information for each word.
-3. It joins the TSV data to the interest-area report by `ItemId` and `word_index`.
-4. For rows where `word`, `line_number`, or `position_in_line` are blank, the script fills them from the TSV data.
-5. It writes out a new CSV (e.g., `interest_area_report_filled.csv`) with the completed metadata.
+1. Put participant ZIP result files in `run_motr_in_magpie/Results/`.
+2. The script extracts `interest_area_report.csv` from each ZIP and combines them into `interest_area_report_all_participants.csv`.
+3. It reads Provo items TSV files (`provo/trials/provo_items_*.tsv`) to fill lexical metadata.
+4. It fills `word`, `line_number`, and `position_in_line` using TSV data plus observed/inferred line-position anchors.
+5. It writes `interest_area_report_filled.csv` with blanks instead of `NA`.
 
 See the comments at the top of the R script file for configuration details (paths, file patterns, and column names). This offline step ensures that skipped words have complete lexical and positional information for downstream analysis.
 

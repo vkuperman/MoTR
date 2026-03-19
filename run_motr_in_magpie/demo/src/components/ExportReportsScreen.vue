@@ -128,7 +128,7 @@ const INTEREST_AREA_CSV_COLUMNS = [
   'go_past_time_ms', 'IA_REGRESSION_IN', 'IA_REGRESSION_OUT',
   'text_total_viewing_time_ms',
   'first_click_x', 'first_click_y',
-  'first_click_duration_ms', 'total_duration_ms', 'next_click_regression',
+  'next_click_regression',
   'x_distance_from_previous_click_px', 'x_distance_from_previous_click_chars',
   'first_click_x_from_word_left_chars', 'first_click_x_from_word_center_chars',
   'first_click_x_from_line_start_px', 'first_click_x_from_line_start_chars',
@@ -378,6 +378,28 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
         if (firstClick.xFromLineStartChars != null) {
           firstClickXFromLineStartChars = Number(firstClick.xFromLineStartChars).toFixed(4);
         }
+        // Fallback: derive line-start distances from observed clicked words on same line.
+        if (firstClickXFromLineStartPx === '' && firstClick.line_number != null && firstClick.line_number !== '') {
+          const sameLine = rows.filter(r =>
+            r.line_number != null &&
+            r.line_number !== '' &&
+            String(r.line_number) === String(firstClick.line_number) &&
+            r.wordPositionLeft != null &&
+            r.wordPositionLeft !== ''
+          );
+          if (sameLine.length > 0) {
+            const lineStartX = Math.min(...sameLine.map(r => Number(r.wordPositionLeft)).filter(v => Number.isFinite(v)));
+            if (Number.isFinite(lineStartX) && firstClick.mousePositionX != null && firstClick.mousePositionX !== '') {
+              const xFromLineStart = Number(firstClick.mousePositionX) - lineStartX;
+              if (Number.isFinite(xFromLineStart)) {
+                firstClickXFromLineStartPx = xFromLineStart.toFixed(2);
+                if (charWidth && charWidth > 0) {
+                  firstClickXFromLineStartChars = (xFromLineStart / charWidth).toFixed(4);
+                }
+              }
+            }
+          }
+        }
 
         const prevClicks = rows.filter(r => (r.responseTime || 0) < (firstClick.responseTime || 0) && r.Index != null && Number(r.Index) !== wordIndex);
         const prevClick = prevClicks.length ? prevClicks[prevClicks.length - 1] : null;
@@ -527,8 +549,6 @@ function buildInterestAreaReport(allRows, participantId, expData, sessionTimes) 
       text_total_viewing_time_ms: val('text_total_viewing_time_ms'),
       first_click_x: val('first_click_x'),
       first_click_y: val('first_click_y'),
-      first_click_duration_ms: val('first_click_duration_ms'),
-      total_duration_ms: val('total_duration_ms'),
       next_click_regression: val('next_click_regression'),
       x_distance_from_previous_click_px: val('x_distance_from_previous_click_px'),
       x_distance_from_previous_click_chars: val('x_distance_from_previous_click_chars'),
