@@ -85,8 +85,6 @@ Each row corresponds to **one word position** in a text item (whether that word 
 
 - **first_click_x**: Screen X coordinate (in pixels) of the **first click** on this word.
 - **first_click_y**: Screen Y coordinate (in pixels) of the **first click** on this word.
-- **first_click_duration_ms**: Duration (in milliseconds) of the **first click** on this word.
-- **total_duration_ms**: Sum of `clickDurationMs` across **all clicks** on this word, in milliseconds.
 - **next_click_regression**: Whether the **next click after this word’s last click** was a regression in word order:  
   - `"1"` = the next click was on an **earlier** word (lower `word_index`, indicating a regression).  
   - `"0"` = the next click was on the same or a later word (no regression).  
