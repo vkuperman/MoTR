@@ -9,6 +9,33 @@ Both files are generated and zipped at the end of each session and uploaded acco
 
 ---
 
+## Where to place zipped result files
+
+For post-processing with `analysis/fill_interest_area_metadata.R`, place participant ZIP files in:
+
+- `run_motr_in_magpie/Results/`
+
+Expected ZIP naming pattern (default script setting):
+
+- `motr_results_*.zip`
+
+The script automatically:
+
+1. Finds ZIPs in `run_motr_in_magpie/Results/`
+2. Extracts each `interest_area_report.csv`
+3. Combines them into `interest_area_report_all_participants.csv`
+4. Fills metadata (`word`, `line_number`, `position_in_line`)
+5. Writes `interest_area_report_filled.csv`
+
+Run from `run_motr_in_magpie`:
+
+```r
+setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+source("analysis/fill_interest_area_metadata.R")
+```
+
+---
+
 ## Fixation report (`fixation_report.csv`)
 
 Each row corresponds to **one mouse click (fixation)** on a word.
@@ -111,11 +138,11 @@ Each row corresponds to **one word position** in a text item (whether that word 
 
 For interest-area rows where the word was **not clicked** (`skipped = "1"`), the `word`, `line_number`, and `position_in_line` columns are left blank by the JavaScript export. To fill these values, you can run the accompanying R script (for example, saved as `analysis/fill_interest_area_metadata.R`):
 
-1. The script reads the exported `interest_area_report.csv`.
-2. It reads the Provo items TSV files (e.g., `provo/trials/provo_items_*.tsv`), which contain the text and positional information for each word.
-3. It joins the TSV data to the interest-area report by `ItemId` and `word_index`.
-4. For rows where `word`, `line_number`, or `position_in_line` are blank, the script fills them from the TSV data.
-5. It writes out a new CSV (e.g., `interest_area_report_filled.csv`) with the completed metadata.
+1. Put participant ZIP result files in `run_motr_in_magpie/Results/`.
+2. The script extracts `interest_area_report.csv` from each ZIP and combines them into `interest_area_report_all_participants.csv`.
+3. It reads Provo items TSV files (`provo/trials/provo_items_*.tsv`) to fill lexical metadata.
+4. It fills `word`, `line_number`, and `position_in_line` using TSV data plus observed/inferred line-position anchors.
+5. It writes `interest_area_report_filled.csv` with blanks instead of `NA`.
 
 See the comments at the top of the R script file for configuration details (paths, file patterns, and column names). This offline step ensures that skipped words have complete lexical and positional information for downstream analysis.
 

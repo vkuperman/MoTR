@@ -56,3 +56,20 @@ You need **Git** installed: https://git-scm.com/download/win
 - `api/` – Upload-results serverless API (email + optional GitHub storage). See [api/README.md](api/README.md) for env vars and saving reports to GitHub.
 
 Only the **demo** folder is set up to run with `npm install` and `npm run serve` from this repo.
+
+## Post-processing IA reports from ZIP files
+
+To combine participant results and fill missing interest-area metadata:
+
+1. Put participant ZIP result files in:
+   - `run_motr_in_magpie/Results/`
+2. Open R/RStudio and run:
+   ```r
+   setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+   source("analysis/fill_interest_area_metadata.R")
+   ```
+3. Outputs:
+   - `run_motr_in_magpie/Results/interest_area_report_all_participants.csv`
+   - `run_motr_in_magpie/Results/interest_area_report_filled.csv`
+
+See `run_motr_in_magpie/README_Reports.md` for variable definitions and detailed report notes.
