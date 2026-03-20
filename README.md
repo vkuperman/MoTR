@@ -35,7 +35,7 @@ You need **Git** installed: https://git-scm.com/download/win
 2. **Initialize git and push** from this folder (the one that contains `run_motr_in_magpie` and this README):
 
    ```bash
-   cd C:\Seafile\ReadLabProjects\MouseTracking\Code\MoTR
+   cd C:\path\to\your\MoTR_Click
    git init
    git add .
    git commit -m "MoTR demo with click-to-reveal and 4/14 character unblur"
@@ -81,7 +81,8 @@ To combine participant results and fill missing interest-area metadata:
    - `run_motr_in_magpie/Results/`
 2. Open R/RStudio and run:
    ```r
-   setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+   # Set this to your own local folder that contains `analysis/` and `Results/`
+   setwd("C:/path/to/your/MoTR_Click/run_motr_in_magpie")
    source("analysis/fill_interest_area_metadata.R")
    ```
 3. Outputs:

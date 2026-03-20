@@ -30,7 +30,8 @@ The script automatically:
 Run from `run_motr_in_magpie`:
 
 ```r
-setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+# Set this to your own local folder that contains `analysis/` and `Results/`
+setwd("C:/path/to/your/MoTR_Click/run_motr_in_magpie")
 source("analysis/fill_interest_area_metadata.R")
 ```
 
