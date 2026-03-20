@@ -71,7 +71,7 @@ For each row, the following participant-level fields are included:
 - `device` – reported input device (mouse/trackpad/other).
 - `hand` – reported hand used during the experiment.
 
-For each text item, the participant’s answer to the comprehension question is stored in the `response` column in both CSV files. The same `SonaId` value is repeated on every row for that participant, which makes it easier to merge these files with other datasets keyed by SONA ID.
+For each text item, the participant’s answer to the comprehension question is stored in the `response` column in both CSV files, and correctness is stored in `response_correct` (`1` = correct, `0` = incorrect). The same `SonaId` value is repeated on every row for that participant, which makes it easier to merge these files with other datasets keyed by SONA ID.
 
 ## Post-processing IA reports from ZIP files
 
