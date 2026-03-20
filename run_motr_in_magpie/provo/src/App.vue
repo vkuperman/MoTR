@@ -90,8 +90,7 @@
             ">
           <br> By clicking on the button below you consent to participating in this study: <br><br>
           <br />
-          <button
-            @click="$magpie.addExpData({ SubjectId: $magpie.measurements.SubjectID, SubjectID: $magpie.measurements.SubjectID, SonaId: $magpie.measurements.SubjectID, experiment_start_time: new Date().toISOString() }); $magpie.nextScreen()">
+          <button @click="recordSonaAndProceed">
             Proceed
           </button>
 
@@ -115,6 +114,7 @@
             <input type="hidden" class="item_id" :value="trial.item_id">
             <input type="hidden" class="experiment_id" :value="trial.experiment_id">
             <input type="hidden" class="condition_id" :value="trial.condition_id">
+            <input type="hidden" class="trial_index" :value="i + 1">
           </form>
           <div class="oval-cursor"></div>
           <template>
@@ -287,9 +287,58 @@ export default {
 
       const areas = {};
 
+      // Compute vertical boundaries that tile the space between lines:
+      // - between lines: use midpoints
+      // - before first line / after last line: use half a line-gap.
+      const lineBounds = lines.map(lineItems => {
+        const tops = lineItems.map(li => li.rect.top);
+        const bottoms = lineItems.map(li => li.rect.bottom);
+        return {
+          top: Math.min(...tops),
+          bottom: Math.max(...bottoms)
+        };
+      });
+
+      const lineVerticals = [];
+      if (lineBounds.length === 1) {
+        // Single line: fall back to a small margin based on maxHeight.
+        const lb = lineBounds[0];
+        const top = lb.top - 0.5 * maxHeight;
+        const bottom = lb.bottom + 0.5 * maxHeight;
+        lineVerticals.push({ top, bottom });
+      } else {
+        const mids = [];
+        for (let i = 0; i < lineBounds.length - 1; i++) {
+          mids.push((lineBounds[i].bottom + lineBounds[i + 1].top) / 2);
+        }
+
+        for (let k = 0; k < lineBounds.length; k++) {
+          let top;
+          let bottom;
+          if (k === 0) {
+            const gap = lineBounds[1].top - lineBounds[0].bottom;
+            top = lineBounds[0].top - gap / 2;
+            bottom = mids[0];
+          } else if (k === lineBounds.length - 1) {
+            const gap = lineBounds[k].top - lineBounds[k - 1].bottom;
+            top = mids[k - 1];
+            bottom = lineBounds[k].bottom + gap / 2;
+          } else {
+            top = mids[k - 1];
+            bottom = mids[k];
+          }
+          lineVerticals.push({ top, bottom });
+        }
+      }
+
+      const { width: baseCharWidth } = this.getCharSizePx();
+      const charWidth = baseCharWidth && Number.isFinite(baseCharWidth) ? baseCharWidth : 10;
+
       lines.forEach((lineItems, lineIdx) => {
         const n = lineItems.length;
         if (!n) return;
+
+        const vBounds = lineVerticals[lineIdx];
 
         for (let i = 0; i < n; i++) {
           const curr = lineItems[i].rect;
@@ -298,19 +347,35 @@ export default {
           let left;
           let right;
 
-          if (i === 0 && n > 1) {
+          const isFirstLine = (lineIdx === 0);
+          const isLastLine = (lineIdx === lines.length - 1);
+
+          if (n === 1) {
+            // Single word on this line
+            left = curr.left;
+            right = curr.right;
+            if (isFirstLine) {
+              left -= charWidth / 2;
+            }
+            if (isLastLine) {
+              right += charWidth / 2;
+            }
+          } else if (i === 0) {
             const next = lineItems[i + 1].rect;
             const midNext = (curr.right + next.left) / 2;
             left = curr.left;
             right = midNext;
-          } else if (i === n - 1 && n > 1) {
+            if (isFirstLine) {
+              left -= charWidth / 2;
+            }
+          } else if (i === n - 1) {
             const prev = lineItems[i - 1].rect;
             const midPrev = (prev.right + curr.left) / 2;
             left = midPrev;
             right = curr.right;
-          } else if (n === 1) {
-            left = curr.left;
-            right = curr.right;
+            if (isLastLine) {
+              right += charWidth / 2;
+            }
           } else {
             const prev = lineItems[i - 1].rect;
             const next = lineItems[i + 1].rect;
@@ -318,8 +383,8 @@ export default {
             right = (curr.right + next.left) / 2;
           }
 
-          const top = curr.top - 0.5 * maxHeight;
-          const bottom = curr.bottom + 0.5 * maxHeight;
+          const top = vBounds.top;
+          const bottom = vBounds.bottom;
 
           areas[idx] = {
             left,
@@ -347,8 +412,8 @@ export default {
       if (oval) {
         oval.classList.remove('grow');
         oval.classList.remove('blank');
-        oval.style.width = '';
-        oval.style.height = '';
+        oval.style.width = '0px';
+        oval.style.height = '0px';
       }
       this.currentIndex = null;
       this.isClickHeld = false;
@@ -364,6 +429,9 @@ export default {
       this.clickStartY = y;
 
       const oval = this.$el.querySelector(".oval-cursor");
+      if (oval) {
+        oval.classList.add('grow');
+      }
       const { width: charWidth } = this.getCharSizePx();
       const line = this.getLineClosestTo(y);
       const charsLeft = 4;
@@ -372,7 +440,6 @@ export default {
       const ovalWidthPx = totalChars * charWidth;
       const ovalHeightPx = line ? line.lineHeight : 20;
       const ovalCenterY = line ? (line.lineTop + line.lineBottom) / 2 : y;
-      oval.classList.add('grow');
       oval.style.width = `${ovalWidthPx}px`;
       oval.style.height = `${ovalHeightPx}px`;
       oval.style.left = `${x + (charsRight - charsLeft) / 2 * charWidth}px`;
@@ -469,8 +536,8 @@ export default {
       if (oval) {
         oval.classList.remove('grow');
         oval.classList.remove('blank');
-        oval.style.width = '';
-        oval.style.height = '';
+        oval.style.width = '0px';
+        oval.style.height = '0px';
       }
       this.isClickHeld = false;
       this.currentIndex = null;
@@ -479,10 +546,20 @@ export default {
       const expEl = this.$el.querySelector(".experiment_id");
       if (!expEl) return;
       const durationMs = this.clickStartTime != null ? endTime - this.clickStartTime : null;
+      const subjectId =
+        this.$magpie && this.$magpie.measurements && this.$magpie.measurements.SubjectID
+          ? this.$magpie.measurements.SubjectID
+          : '';
+      const trialIndexEl = this.$el.querySelector(".trial_index");
+      const presentationOrder = trialIndexEl && trialIndexEl.value !== '' ? parseInt(trialIndexEl.value, 10) : null;
+      const spans = this.$el.querySelectorAll('.readingText span[data-index]');
+      const totalWordsInItem = spans && spans.length ? spans.length : null;
+      const allWords = spans && spans.length ? Array.from(spans).map((s) => s.innerHTML).join(' ') : null;
       const payload = {
         Experiment: expEl.value,
         Condition: this.$el.querySelector(".condition_id").value,
         ItemId: this.$el.querySelector(".item_id").value,
+        presentation_order: presentationOrder,
         Index: this.clickWordIndex !== null && this.clickWordIndex !== -1 ? parseInt(this.clickWordIndex, 10) : this.clickWordIndex,
         Word: this.clickWord,
         mousePositionX: this.clickStartX,
@@ -490,6 +567,11 @@ export default {
         clickDurationMs: durationMs,
         relativeXInWord: this.relativeXInWord,
         relativeYInWord: this.relativeYInWord,
+        totalWordsInItem: totalWordsInItem,
+        allWords: allWords,
+        SubjectId: subjectId,
+        SubjectID: subjectId,
+        SonaId: subjectId
       };
       if (this.clickWordRect) {
         payload.wordPositionTop = this.clickWordRect.top;
@@ -540,6 +622,24 @@ export default {
         window_inner_width: window.innerWidth,
         window_inner_height: window.innerHeight
       };
+    },
+    recordSonaAndProceed() {
+      const id = (this.$magpie && this.$magpie.measurements && this.$magpie.measurements.SubjectID) ? String(this.$magpie.measurements.SubjectID).trim() : '';
+      this.$magpie.addExpData({
+        SubjectId: id,
+        SubjectID: id,
+        SonaId: id,
+        SONAId: id,
+        experiment_start_time: new Date().toISOString()
+      });
+      this.$magpie.addTrialData({
+        SONAId: id,
+        SubjectId: id,
+        SubjectID: id,
+        SonaId: id,
+        source: 'welcome'
+      });
+      this.$magpie.nextScreen();
     },
     recordResponse(trial) {
       const m = this.$magpie && this.$magpie.measurements ? this.$magpie.measurements : null;
@@ -592,29 +692,22 @@ export default {
   .oval-cursor {
     position: fixed;
     z-index: 2;
-    width: 1px;
-    height: 1px;
+    width: 0;
+    height: 0;
     transform: translate(-50%, -50%);
     background-color: white;
     mix-blend-mode: difference;
     border-radius: 50%;
     pointer-events: none;
-    transition: width 0.5s, height 0.5s;
-  } 
-  .oval-cursor.grow.blank {
-    width: 80px;
-    height: 13px;
+    transition: none;
   }
   .oval-cursor.grow {
-    width: 102px;
-    height: 38px;
     border-radius: 50%;
     box-shadow: 30px 0 8px -4px rgba(255, 255, 255, 0.1), -30px 0 8px -4px rgba(255, 255, 255, 0.1);
     background-color: rgba(255, 255, 255, 0.3);
     background-blend-mode: screen;
     pointer-events: none;
-    transition: width 0.5s, height 0.5s;
-    filter:blur(3px);
+    filter: blur(3px);
   }
   .oval-cursor.grow::before {
     content: "";

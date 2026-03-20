@@ -72,3 +72,20 @@ For each row, the following participant-level fields are included:
 - `hand` – reported hand used during the experiment.
 
 For each text item, the participant’s answer to the comprehension question is stored in the `response` column in both CSV files. The same `SonaId` value is repeated on every row for that participant, which makes it easier to merge these files with other datasets keyed by SONA ID.
+
+## Post-processing IA reports from ZIP files
+
+To combine participant results and fill missing interest-area metadata:
+
+1. Put participant ZIP result files in:
+   - `run_motr_in_magpie/Results/`
+2. Open R/RStudio and run:
+   ```r
+   setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+   source("analysis/fill_interest_area_metadata.R")
+   ```
+3. Outputs:
+   - `run_motr_in_magpie/Results/interest_area_report_all_participants.csv`
+   - `run_motr_in_magpie/Results/interest_area_report_filled.csv`
+
+See `run_motr_in_magpie/README_Reports.md` for variable definitions and detailed report notes.
