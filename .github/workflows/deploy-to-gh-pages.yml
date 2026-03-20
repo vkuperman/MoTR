@@ -29,3 +29,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: run_motr_in_magpie/demo/dist
           destination_dir: demo
+          keep_files: true

@@ -29,4 +29,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: run_motr_in_magpie/provo/dist
           destination_dir: provo-emalie
-          force_orphan: true
+          keep_files: true
