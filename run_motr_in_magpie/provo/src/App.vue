@@ -645,9 +645,13 @@ export default {
       const m = this.$magpie && this.$magpie.measurements ? this.$magpie.measurements : null;
       if (!m || !m.response) return;
       const itemId = trial.item_id != null ? trial.item_id : trial.ItemId;
+      const selectedResponse = String(m.response).trim();
+      const correctAnswer = trial && trial.response_true != null ? String(trial.response_true).replace(/ ?["]+/g, '').trim() : '';
+      const responseCorrect = correctAnswer !== '' ? (selectedResponse === correctAnswer ? '1' : '0') : '';
       this.$magpie.addTrialData({
         ItemId: itemId,
-        response: String(m.response)
+        response: selectedResponse,
+        response_correct: responseCorrect
       });
     }
   },
