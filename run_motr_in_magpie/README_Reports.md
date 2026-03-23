@@ -30,7 +30,8 @@ The script automatically:
 Run from `run_motr_in_magpie`:
 
 ```r
-setwd("C:/Users/emali/Projects/MoTR_Click/run_motr_in_magpie")
+# Set this to your own local folder that contains `analysis/` and `Results/`
+setwd("C:/path/to/your/MoTR_Click/run_motr_in_magpie")
 source("analysis/fill_interest_area_metadata.R")
 ```
 
@@ -63,6 +64,7 @@ Each row corresponds to **one mouse click (fixation)** on a word.
 - **line_number**: Line number in the rendered text where the clicked word appears (1 = top line).
 - **position_in_line**: Position of the word within its line (1 = leftmost word on that line).
 - **response**: Participant’s comprehension response for this **item** (e.g., answer to the post-text question). The same value is repeated for all fixations belonging to the same item.
+- **response_correct**: Whether the comprehension response for this item was correct (`"1"` = correct, `"0"` = incorrect, empty if correctness could not be determined).
 - **position_in_text**: Same logical position as `WordIndex` (1-based index of the word within the text item).
 - **text_total_viewing_time_ms**: Total viewing time of the **page** (text item) in milliseconds: time from the first fixation to the last fixation on that item (same value for all fixations belonging to the same item).
 - **saccade_start_x**, **saccade_start_y**, **saccade_start_time**: For the saccade **from this fixation to the next** (within the same item): start position and timestamp. Same as this row’s `mousePositionX`, `mousePositionY`, `responseTime`.
@@ -88,8 +90,10 @@ Each row corresponds to **one word position** in a text item (whether that word 
 - **text_presentation_order**: Order in which the text item appeared in the session (same value for all rows belonging to a given item).
 
 - **word_index**: Position of this word within the text item (1-based). Every possible word index for the item gets a row, even if the word was never clicked.
+- **WordIndex**: Duplicate of `word_index` for compatibility with workflows expecting the fixation-style naming.
 - **word**: The word string **only if it was clicked at least once**. This field is left blank for words that were skipped (no clicks). To populate these blanks for skipped words, use the companion R script described below to join in information from the Provo items TSV files.
 - **response**: Participant’s comprehension response for this item (same as `response` in the fixation report; identical for all word positions within the same item).
+- **response_correct**: Whether the comprehension response for this item was correct (`"1"` = correct, `"0"` = incorrect, empty if correctness could not be determined).
 - **line_number**: Line number in the rendered text where this word is located (taken from the first click on this word; blank if the word was never clicked, and can be filled for skipped words via the R script).
 - **position_in_line**: Position of the word within its line (taken from the first click on this word; blank if never clicked, and can be filled for skipped words via the R script).
 
@@ -112,6 +116,8 @@ Each row corresponds to **one word position** in a text item (whether that word 
 
 - **first_click_x**: Screen X coordinate (in pixels) of the **first click** on this word.
 - **first_click_y**: Screen Y coordinate (in pixels) of the **first click** on this word.
+- **first_click_duration_ms**: Duration (in milliseconds) of the first click on this word.
+- **total_duration_ms**: Sum of click durations on this word across all visits.
 - **next_click_regression**: Whether the **next click after this word’s last click** was a regression in word order:  
   - `"1"` = the next click was on an **earlier** word (lower `word_index`, indicating a regression).  
   - `"0"` = the next click was on the same or a later word (no regression).  

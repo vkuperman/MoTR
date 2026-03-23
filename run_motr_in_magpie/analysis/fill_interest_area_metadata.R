@@ -93,7 +93,9 @@ combine_interest_area_reports <- function(ia_paths, sources, output_path) {
   message("Combining ", length(ia_paths), " interest-area CSV file(s)...")
   frames <- lapply(seq_along(ia_paths), function(i) {
     f <- ia_paths[[i]]
-    d <- readr::read_csv(f, show_col_types = FALSE)
+    # Read all columns as character to avoid type collisions across participant files
+    # (e.g., SONAId inferred as numeric in one file and character in another).
+    d <- readr::read_csv(f, col_types = readr::cols(.default = readr::col_character()), show_col_types = FALSE)
     d$source_file <- sources[[i]]
     d
   })
@@ -108,7 +110,11 @@ if (combine_all_participants) {
   ia <- combine_interest_area_reports(entries$paths, entries$sources, combined_output_csv)
 } else {
   message("Reading interest-area report from: ", interest_area_csv)
-  ia <- readr::read_csv(interest_area_csv, show_col_types = FALSE)
+  ia <- readr::read_csv(
+    interest_area_csv,
+    col_types = readr::cols(.default = readr::col_character()),
+    show_col_types = FALSE
+  )
 }
 
 message("Searching for items TSV files in: ", items_dir)
