@@ -81,7 +81,7 @@
         <p>Thank you for your help!</p>
         <br>
 
-          <p>Type in your SONA ID here. It is a 5-digit number found on Linguistics SONA under My Profile &gt; Identity Code.</p>
+          <p>Please enter your Prolific ID</p>
           <p><input name="SonaID" type="text" class="obligatory" v-model="$magpie.measurements.SubjectID" placeholder="SONA ID"/></p>
           </div>
           <div v-if="
