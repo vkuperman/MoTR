@@ -32,7 +32,7 @@
           Mouse-tracking uses an online platform to register the position on the screen where you click the mouse, and the duration for which you hold that position. In a mouse-tracking paradigm, all text is blurred until you click on a word. Upon clicking, a small, clear window appears, allowing you to read that portion of the text. You must continue clicking around the screen to read the entirety of the text. Mouse-click information can inform researchers about which words are being viewed and for how long. This allows researchers to investigate the cognitive processes used to read and understand written texts.
         <br><br>
           <b>What will happen during the study?</b><br>
-          This experiment will take place online. You will be asked to provide some demographic information as well as information about your reading and language background. You will then read a series of texts which are presented with the blurred mouse-tracking method. Your mouse clicks will be recorded while you read the texts. After reading each text, you will be asked to answer some comprehension questions. The session will take approximately 60 minutes.
+          This experiment will take place online. You will be asked to provide some demographic information as well as information about your reading and language background. You will then read a series of texts which are presented with the blurred mouse-tracking method. Your mouse clicks will be recorded while you read the texts. After reading each text, you will be asked to answer some comprehension questions. The session will take approximately 30 minutes.
         <br><br>
           We will start by asking you to fill out a questionnaire consisting of personal information, such as age, gender, handedness, the presence of visual or reading problems, and such. Then you will proceed to a series of tests that will measure a selection of your reading habits, how you feel at the moment, and some general cognitive skills. These tests will be administered by the experimenter either orally or as questionnaires that you will need to fill in.
         <br><br>
@@ -47,7 +47,7 @@
           The results of this research will not directly benefit you in any way. We hope to learn more about how words in English are processed.
         <br><br>
           <b>Incentive/Payment or Reimbursement:</b><br>
-          Participants will earn 0.5 credits per 30 minutes of experiment participation, for a total of 1 full credit.
+          Participants will earn a prorated hourly rate of 10 GBP for their participation in this study.
         <br><br>
           <b>Confidentiality:</b><br>
           All personal information we attain will remain highly confidential. Within this study, you will be identified as a participant number. Any personal information you provide will only be accessible to the principal investigators and co-investigators at McMaster, as well as research assistants. All information will be strictly secured in a locked cabinet or on a password-protected computer. No publication or discussion regarding this study will contain any personal and/or identifying information. As requested by the federal Tri-Council funding agencies and policies, we will retain your data for at least 5 years. Once out of active use, the electronic data will be archived on a secure server in the McMaster research lab.
