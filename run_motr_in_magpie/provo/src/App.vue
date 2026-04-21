@@ -169,7 +169,7 @@
 </Screen>
 
     <ExportReportsScreen :skip-sona-input="true" />
-    <SubmitResultsScreen />
+    <CustomSubmitResultsScreen />
   </Experiment>
 </template>
 
@@ -181,10 +181,11 @@ import provo_list3 from '../trials/provo_items_list3.tsv';
 import provo_practice from '../trials/provo_items_practice.tsv';
 import _ from 'lodash';
 import ExportReportsScreen from '../../demo/src/components/ExportReportsScreen.vue';
+import CustomSubmitResultsScreen from './components/CustomSubmitResultsScreen.vue';
 
 export default {
   name: 'App',
-  components: { ExportReportsScreen },
+  components: { ExportReportsScreen, CustomSubmitResultsScreen },
   data() {
     const lists = [provo_list1, provo_list2, provo_list3];
     const chosenItems = lists[Math.floor(Math.random() * lists.length)]; // randomly choose one of the lists
