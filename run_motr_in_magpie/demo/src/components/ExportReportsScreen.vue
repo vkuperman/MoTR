@@ -11,8 +11,12 @@
       </div>
     </Slide>
     <Slide v-else>
-      <!-- Blank thank-you page (when skipSonaInput, export runs automatically) -->
-      <div></div>
+      <p>
+        Thank you for participating in our study. Follow this URL to complete your submission and be redirected to Prolific:
+        <a href="https://app.prolific.com/submissions/complete?cc=C1FQEQTP" target="_blank" rel="noopener">
+          https://app.prolific.com/submissions/complete?cc=C1FQEQTP
+        </a>
+      </p>
     </Slide>
   </Screen>
 </template>
